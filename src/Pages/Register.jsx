@@ -61,7 +61,16 @@ export const Register = () => {
   };
 
   // oonCapture
-  function onCapture() {
+   function onCapture() {
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (e) {}
+      window.recaptchaVerifier = null;
+    }
+    const el = document.getElementById("recaptcha-container");
+    if (el) el.innerHTML = "";
+
     window.recaptchaVerifier = new RecaptchaVerifier(
       "recaptcha-container",
       {
@@ -80,7 +89,7 @@ export const Register = () => {
   function handleVerifyNumber() {
     document.querySelector("#nextButton").innerText = "Please wait...";
     onCapture();
-    const phoneNumber = `+91${number}`;
+    const phoneNumber = `+1${number}`;
     const appVerifier = window.recaptchaVerifier;
     if (number.length === 10) {
       if (exist) {
@@ -102,9 +111,9 @@ export const Register = () => {
             // ...
           })
           .catch((error) => {
-            // Error; SMS not sent
-            // document.querySelector("#nextButton").innerText = 'Server Error'
-            // ...
+            console.error("Firebase phone auth error:", error.code, error.message);
+            document.querySelector("#loginMesageError").innerHTML = error.code;
+            document.querySelector("#nextButton").innerText = "Next";
           });
       }
       //
