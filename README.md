@@ -146,6 +146,17 @@ This project can be deployed locally (as above) or to a cloud platform such as V
 - [Add any other known issues or planned improvements here.]
 
 
+## Contributing
+ 
+Contributions are welcome. To contribute:
+ 
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/your-feature`).
+3. Commit your changes with clear messages.
+4. Push to your fork and open a pull request describing your changes.
+Please open an issue first for significant changes so they can be discussed before implementation.
+
+
 ## Acknowledgements
 
 Referencing [Expedia.com](https://www.expedia.com/) for feature inspiration. Originally built as an open-source project by Kumkum, Ashish, Amit, Sagar Balsaraf, and Sarim; extended here as part of the SE 3290 – Software Project Management course project.
