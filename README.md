@@ -146,26 +146,6 @@ There is **no cloud database** (Firestore, Realtime Database, or Storage) in use
    serve -s build
    ```
 
-## Firebase Setup
-
-This app uses Firebase **only** for phone number (OTP) authentication — there is no Firestore, Realtime Database, or Storage usage.
-
-1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project (or use the team's existing project).
-2. In **Build → Authentication → Sign-in method**, enable the **Phone** provider.
-3. (Recommended for development/demo) In the same tab, scroll to **Phone numbers for testing** and add a test number with a fixed OTP code, so you can log in repeatedly without using real SMS quota. [CONFIRM AND DOCUMENT THE TEAM'S TEST NUMBER/CODE HERE]
-4. In **Project Settings → General → Your apps**, add a Web app (or use the existing one) and copy the config object.
-5. Create a `.env` file in the project root (see `.env.example`) and populate it with your Firebase config:
-
-```
-REACT_APP_FIREBASE_API_KEY=your_api_key
-REACT_APP_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-REACT_APP_FIREBASE_PROJECT_ID=your_project_id
-REACT_APP_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-REACT_APP_FIREBASE_APP_ID=your_app_id
-```
-
-> ⚠️ **Spark plan note:** the free tier caps phone-auth SMS at **10 messages per day per project**. Budget test logins accordingly, especially before recording a demo video.
 
 
 ## Project Structure
@@ -252,7 +232,7 @@ Please open an issue first for significant changes so they can be discussed befo
 
 
 ## Contributors
-[Claire Miller, Grace White, Chloe Atwood, Paul Zell]
+Claire Miller, Grace White, Chloe Atwood, Paul Zell
 
 
 ## Acknowledgements
