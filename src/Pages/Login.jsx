@@ -45,83 +45,144 @@ export const Login = () => {
   //
 
   function onCapture() {
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (e) {
+        console.log("Could not clear old reCAPTCHA");
+      }
+      window.recaptchaVerifier = null;
+    }
+
     window.recaptchaVerifier = new RecaptchaVerifier(
       "recaptcha-container",
       {
         size: "invisible",
-        callback: (response) => {
-          handleVerifyNumber();
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-          // ...
+        callback: () => {
+          console.log("reCAPTCHA verified");
+        },
+        "expired-callback": () => {
+          console.log("reCAPTCHA expired");
         },
       },
       auth
     );
+
+    return window.recaptchaVerifier;
   }
 
-  function handleVerifyNumber() {
-    document.querySelector("#nextText").innerText = "Please wait...";
-    onCapture();
-    const phoneNumber = `+91${number}`;
-    const appVerifier = window.recaptchaVerifier;
-    if (number.length === 10) {
-      if (exist) {
-        signInWithPhoneNumber(auth, phoneNumber, appVerifier)
-          .then((confirmationResult) => {
-            // SMS sent. Prompt user to type the code from the message, then sign the
-            // user in with confirmationResult.confirm(code).
-            window.confirmationResult = confirmationResult;
-            setCheck({ ...check, verify: true });
-            document.querySelector(
-              "#loginMesageSuccess"
-            ).innerHTML = `Otp Send To ${number} !`;
-            document.querySelector("#loginMesageError").innerHTML = "";
-            document.querySelector("#nextText").style.display = "none";
-            // ...
-          })
-          .catch((error) => {
-            // Error; SMS not sent
-            // document.querySelector("#nextText").innerText = "Server Error"
-            // ...
-          });
-      } else {
-        document.querySelector("#loginMesageSuccess").innerHTML = ``;
-        document.querySelector("#loginMesageError").innerHTML =
-          "User does not exist Please Create Your Account !";
-          setInterval(() => {
-            window.location="/register"
-          }, 1000);
-      }
-      //
-    } else {
-      document.querySelector("#loginMesageSuccess").innerHTML = ``;
+  async function handleVerifyNumber() {
+    const button = document.querySelector("#nextText");
+
+    if (number.length !== 10) {
+      document.querySelector("#loginMesageSuccess").innerHTML = "";
+
       document.querySelector("#loginMesageError").innerHTML =
         "Mobile Number is Invalid !";
+
+      return;
+    }
+
+    if (!exist) {
+      document.querySelector("#loginMesageSuccess").innerHTML = "";
+
+      document.querySelector("#loginMesageError").innerHTML =
+        "User does not exist. Please create your account!";
+
+      setTimeout(() => {
+        window.location = "/register";
+      }, 1000);
+
+      return;
+    }
+
+    try {
+      button.innerText = "Please wait...";
+      button.disabled = true;
+
+      const phoneNumber = `+1${number}`;
+
+      console.log("Attempting Firebase login with:", phoneNumber);
+
+      const appVerifier = onCapture();
+
+      const confirmationResult = await signInWithPhoneNumber(
+        auth,
+        phoneNumber,
+        appVerifier
+      );
+
+      console.log("SMS successfully sent");
+
+      window.confirmationResult = confirmationResult;
+
+      setCheck({
+        ...check,
+        verify: true,
+      });
+
+      document.querySelector("#loginMesageSuccess").innerHTML =
+        `OTP sent to ${number}!`;
+
+      document.querySelector("#loginMesageError").innerHTML = "";
+
+      button.style.display = "none";
+
+    } catch (error) {
+      console.error(
+        "Firebase phone auth error:",
+        error.code,
+        error.message
+      );
+
+      document.querySelector("#loginMesageSuccess").innerHTML = "";
+
+      document.querySelector("#loginMesageError").innerHTML =
+        `${error.code}: ${error.message}`;
+
+      button.innerText = "SignIn";
+      button.disabled = false;
+
+      // Clean up reCAPTCHA so it can be recreated
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {}
+
+        window.recaptchaVerifier = null;
+      }
     }
   }
 
   //
-  function verifyCode() {
-    window.confirmationResult
-      .confirm(otp)
-      .then((result) => {
-        // User signed in successfully.
-        const user = result.user;
+  async function verifyCode() {
+    if (!window.confirmationResult) {
+      document.querySelector("#loginMesageError").innerHTML =
+        "Please request an OTP first.";
 
-        document.querySelector(
-          "#loginMesageSuccess"
-        ).innerHTML = `Verifyed Successful`;
-        document.querySelector("#loginMesageError").innerHTML = "";
+      return;
+    }
 
-        dispatch(login_user(data));
-        // ...
-      })
-      .catch((error) => {
-        // User couldn't sign in (bad verification code?)
-        document.querySelector("#loginMesageSuccess").innerHTML = ``;
-        document.querySelector("#loginMesageError").innerHTML = "Invalid OTP";
-        // ...
-      });
+    try {
+      const result = await window.confirmationResult.confirm(otp);
+
+      console.log("Firebase login successful:", result.user);
+
+      document.querySelector("#loginMesageSuccess").innerHTML =
+        "Verified Successfully";
+
+      document.querySelector("#loginMesageError").innerHTML = "";
+
+      dispatch(login_user(data));
+
+    } catch (error) {
+      console.error("OTP verification error:", error);
+
+      document.querySelector("#loginMesageSuccess").innerHTML = "";
+
+      document.querySelector("#loginMesageError").innerHTML =
+        "Invalid OTP";
+    }
   }
 
   //

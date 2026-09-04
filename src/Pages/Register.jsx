@@ -57,70 +57,78 @@ export const Register = () => {
     };
     dispatch(userRigister(newObj));
     setCheck(state);
-    window.location = "/login";
-  };
+      window.location = "/login";
+    };
 
-  // oonCapture
-   function onCapture() {
-    if (window.recaptchaVerifier) {
-      try {
-        window.recaptchaVerifier.clear();
-      } catch (e) {}
-      window.recaptchaVerifier = null;
-    }
-    const el = document.getElementById("recaptcha-container");
-    if (el) el.innerHTML = "";
-
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: (response) => {
-          handleVerifyNumber();
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-          // ...
+    // oonCapture
+  function onCapture() {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(
+        "recaptcha-container",
+        {
+          size: "invisible",
         },
-      },
-      auth
-    );
+        auth
+      );
+    }
+
+    return window.recaptchaVerifier;
   }
 
-  //   Verify button
   function handleVerifyNumber() {
-    document.querySelector("#nextButton").innerText = "Please wait...";
-    onCapture();
-    const phoneNumber = `+1${number}`;
-    const appVerifier = window.recaptchaVerifier;
-    if (number.length === 10) {
-      if (exist) {
-        document.querySelector("#loginMesageError").innerHTML =
-          "User Alredy exist";
-        document.querySelector("#loginMesageSuccess").innerHTML = ``;
-      } else {
-        signInWithPhoneNumber(auth, phoneNumber, appVerifier)
-          .then((confirmationResult) => {
-            // SMS sent. Prompt user to type the code from the message, then sign the
-            // user in with confirmationResult.confirm(code).
-            window.confirmationResult = confirmationResult;
-            setCheck({ ...check, verify: true });
-            document.querySelector(
-              "#loginMesageSuccess"
-            ).innerHTML = `Otp Send To ${number} !`;
-            document.querySelector("#loginMesageError").innerHTML = "";
-            document.querySelector("#nextButton").style.display = "none";
-            // ...
-          })
-          .catch((error) => {
-            console.error("Firebase phone auth error:", error.code, error.message);
-            document.querySelector("#loginMesageError").innerHTML = error.code;
-            document.querySelector("#nextButton").innerText = "Next";
-          });
-      }
-      //
-    } else {
-      document.querySelector("#loginMesageSuccess").innerHTML = ``;
+    if (number.length !== 10) {
+      document.querySelector("#loginMesageSuccess").innerHTML = "";
       document.querySelector("#loginMesageError").innerHTML =
         "Mobile Number is Invalid !";
+      return;
+    }
+
+    if (exist) {
+      document.querySelector("#loginMesageError").innerHTML =
+        "User Alredy exist";
+      document.querySelector("#loginMesageSuccess").innerHTML = "";
+      return;
+    }
+
+    document.querySelector("#nextButton").innerText = "Please wait...";
+
+    const phoneNumber = `+1${number}`;
+
+    try {
+      const appVerifier = onCapture();
+
+      signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+        .then((confirmationResult) => {
+          window.confirmationResult = confirmationResult;
+
+          setCheck({ ...check, verify: true });
+
+          document.querySelector("#loginMesageSuccess").innerHTML =
+            `Otp Send To ${number} !`;
+
+          document.querySelector("#loginMesageError").innerHTML = "";
+
+          document.querySelector("#nextButton").style.display = "none";
+        })
+        .catch((error) => {
+          console.error(
+            "Firebase phone auth error:",
+            error.code,
+            error.message
+          );
+
+          document.querySelector("#loginMesageError").innerHTML =
+            error.code || error.message;
+
+          document.querySelector("#nextButton").innerText = "Next";
+        });
+    } catch (error) {
+      console.error("reCAPTCHA error:", error);
+
+      document.querySelector("#loginMesageError").innerHTML =
+        error.code || error.message;
+
+      document.querySelector("#nextButton").innerText = "Next";
     }
   }
 
@@ -174,14 +182,14 @@ export const Register = () => {
           <div className="loginInputB" id="loginNumber">
             <label htmlFor="">Enter Your Number</label>
             <span>
-              <input
-                type="number"
-                readOnly={verify}
-                name="number"
-                value={number}
-                onChange={(e) => handleChangeMobile(e)}
-                placeholder="Number"
-              />
+            <input
+              type="tel"
+              readOnly={verify}
+              name="number"
+              value={number}
+              onChange={(e) => handleChangeMobile(e)}
+              placeholder="Number"
+            />
               <button
                 disabled={verify}
                 onClick={handleVerifyNumber}
